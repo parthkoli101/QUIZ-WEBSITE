@@ -1,0 +1,86 @@
+.logmain{
+    display: flex;
+    margin-top:50px;
+    margin-left:150px;
+    width:800px;
+    height:500px;
+    margin-left:225px;
+}
+#log{
+    background-color: white;
+    width:400px;
+    height:500px;
+
+}
+.pic{
+    background-color: blueviolet;
+
+    width:400px;
+    height:500px;
+}
+.pic img{
+    width: 100%;
+    height: 100%;
+}
+.input{
+    border-radius: 10px;
+    width:300px;
+    height:25px;
+}
+.submit{
+    border-radius: 40px;
+    width:300px;
+    height:50px;
+    background: black;
+    color: white;
+    margin-top: 35px;
+    margin-left: 45px;
+}
+.submitsign{
+    border-radius: 40px;
+    width:300px;
+    height:50px;
+    background: black;
+    color: white;
+    margin-top: 20px;
+    margin-left: 45px;
+}
+.email{
+    margin-top: 20px;
+    margin-left: 40px;
+}
+.pass{
+    margin-top: 20px;
+    margin-left: 40px;
+}
+.loghead h1{
+    margin-left:150px;
+    margin-bottom: 50px;
+    margin-top:45px;
+}
+.signhead h1{
+    margin-left:150px;
+    margin-bottom: 0px;
+    margin-top:1px;
+}
+.signin{
+    margin-left:95px;
+}
+.back{
+    background-color: rgb(176, 14, 84);
+    width:100%;
+    height:100%;
+    background-image: url(https://wallpaperboat.com/wp-content/uploads/2019/10/free-website-background-15.jpg);
+}
+.fname{
+    margin-top: 20px;
+    margin-left: 40px;
+}
+.lname{
+    margin-top: 20px;
+    margin-left: 40px;
+}
+.cname{
+    margin-top: 20px;
+    margin-left: 40px;
+}

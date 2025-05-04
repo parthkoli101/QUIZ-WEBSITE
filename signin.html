@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign in Page</title>
+    <link rel="stylesheet" href="signlog.css">
+</head>
+<body class="back" style="margin-left: 70px;">
+<div class="logmain">
+    <div class="pic">
+        <img src="https://static.vecteezy.com/system/resources/previews/019/040/629/non_2x/neon-sign-quiz-time-with-brick-wall-background-free-vector.jpg" alt="">
+    </div>
+    <div id="log">
+    <form class="form" id="loglog" action="connect.php" method="post">
+        
+        <div class="signhead">
+        <h1>Sign In</h1>
+        </div>
+        <div class="fname">
+            <label>
+                <span>FIRSTNAME</span><br>
+                <input  required type="text" class="input" name="firstname">
+            </label>
+        </div>
+        <div class="lname"> 
+            <label>
+            <span>LASTNAME</span><br>
+            <input required type="text" class="input" name="lastname">
+            </label>
+        </div>  
+        <div class="email">
+            <label for="email" >
+            <span>USERNAME</span><br>
+            <input required type="text" class="input" name="username">
+            </label> 
+        </div>
+        <div class="pass">
+            <label>
+            <span>PASSWORD</span><br>
+            <input required type="password"  class="input" type="password" name="password">
+            </label>
+        </div>
+        <div class="cname">
+            <label>
+            <span>CONFIRM PASSWORD</span><br>
+            <input required type="password" class="input" name="confirmpassword">
+            </label>
+        </div>
+        <div class="alt">
+            </label>
+            <button class="submitsign">Submit</button>
+            <p class="signin">Already have an acount ? <a href="login.html">Log in</a> </p><br>
+        </div>
+    </form>
+    </div>
+</div>
+</body>
+</html>

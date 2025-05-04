@@ -1,0 +1,624 @@
+body {
+    background: beige;
+    text-align-last: center;
+}
+.proj{
+    width:100%;
+    height: 100%;
+    background-image: url(https://img.freepik.com/premium-photo/abstract-background-images-wallpaper-ai-generated_643360-42730.jpg);
+    background-size: cover;
+}
+.head{
+    color: rgb(246, 249, 251);
+}
+
+.quiz1{
+    background-color: aliceblue;
+    width: 20%;
+    height: 500px;
+    border-style: solid;
+    border-radius: 10px;
+    align-content: left;
+    margin-top: 30px;
+    margin-left:75px;
+    position:relative;
+}
+
+.quiz2{
+    background-color: aliceblue;
+    width: 20%;
+    height: 500px;
+    border-style: solid;
+    border-radius: 10px;
+    align-content: left;
+    margin-top: 30px;
+    margin-left: 25px;
+    position:relative;
+}
+
+.quiz3{
+    background-color: aliceblue;
+    width: 20%;
+    height: 500px;
+    border-style: solid;
+    border-radius: 10px;
+    align-content: left;
+    margin-top: 30px;
+    margin-left: 25px;
+    position:relative;
+}
+
+.quiz4{
+    background-color: aliceblue;
+    width: 20%;
+    height: 500px;
+    border-style: solid;
+    border-radius: 10px;
+    align-content: left;
+    margin-top: 30px;
+    margin-left: 25px;
+    position:relative;
+}
+.quiz5{
+    background-color: aliceblue;
+    width: 20%;
+    height: 500px;
+    border-style: solid;
+    border-radius: 10px;
+    align-content: left;
+    margin-top: 30px;
+    margin-left:75px;
+    position:relative;
+}
+.quiz6{
+    background-color: aliceblue;
+    width: 20%;
+    height: 500px;
+    border-style: solid;
+    border-radius: 10px;
+    align-content: left;
+    margin-top: 30px;
+    margin-left: 25px;
+    position:relative;
+}
+
+.quiz7{
+    background-color: aliceblue;
+    width: 20%;
+    height: 500px;
+    border-style: solid;
+    border-radius: 10px;
+    align-content: left;
+    margin-top: 30px;
+    margin-left: 25px;
+    position:relative;
+}
+
+.quiz8{
+    background-color: aliceblue;
+    width: 20%;
+    height: 500px;
+    border-style: solid;
+    border-radius: 10px;
+    align-content: left;
+    margin-top: 30px;
+    margin-left: 25px;
+    position:relative;
+}
+.nav_left{
+    display: flex;
+    border-style: solid;
+}
+.content{
+    display:flex;
+    align-items: center;
+}
+.content p{
+    background: rgb(210, 121, 235);
+    margin-top: 20px;
+    font-size: 23.5px;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+}
+.content1{
+    display:flex;
+    align-items: center;
+}
+.content1 p{
+    background: rgb(210, 121, 235);
+    margin-top: 20px;
+    font-size: 23.5px;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+}
+.content2{
+    display:flex;
+    align-items: center;
+}
+.content2 p{
+    background: rgb(210, 121, 235);
+    margin-top: 20px;
+    font-size: 23.5px;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+}
+.content3{
+    display:flex;
+    align-items: center;
+}
+.content3 p{
+    background: rgb(210, 121, 235);
+    margin-top: 20px;
+    font-size: 23.5px;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+}
+.btn2{
+    font-size: 25px;
+    font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+    width:100%;
+    height:50px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+.btn2:hover{
+    transition: .2s;
+    background-color: rgb(110, 192, 227);
+}
+.quiz1 img{
+    height: 80%;
+    width:100%;
+}
+.quiz1 .btn2{
+    position: absolute;
+    top:90.25%;
+    left:0%;
+}
+
+.quiz2 img{
+    height: 80%;
+    width:100%;
+}
+.quiz2 .btn2{
+    position: absolute;
+    top:90.25%;
+    left:0%;
+}
+.quiz2 .p{
+    background: black;
+    position: absolute;
+    top:50%;
+    left:50%;
+}
+.quiz3 img{
+    height: 80%;
+    width:100%;
+}
+.quiz3 .btn2{
+    position: absolute;
+    top:90.25%;
+    left:0%;
+}
+.quiz4 img{
+    height: 80%;
+    width:100%;
+}
+.quiz4 .btn2{
+    position: absolute;
+    top:90.25%;
+    left:0%;
+}
+.quiz5 img{
+    height: 80%;
+    width:100%;
+}
+.quiz5 .btn2{
+    position: absolute;
+    top:90.25%;
+    left:0%;
+}
+.quiz6 .p{
+    position: absolute;
+    top:50%;
+    left:50%;
+}
+.quiz6 img{
+    height: 80%;
+    width:100%;
+}
+.quiz6 .btn2{
+    position: absolute;
+    top:90.25%;
+    left:0%;
+}
+.quiz6 .p{
+    background: black;
+    position: absolute;
+    top:50%;
+    left:50%;
+}
+.quiz7 img{
+    height: 80%;
+    width:100%;
+}
+.quiz7 .btn2{
+    position: absolute;
+    top:90.25%;
+    left:0%;
+}
+.quiz8 img{
+    height: 80%;
+    width:100%;
+}
+.quiz8 .btn2{
+    position: absolute;
+    top:90.25%;
+    left:0%;
+}
+.navleft{
+display: inline-block;
+}
+.crackdrop{
+    border: none;
+}
+.adrop{
+    display:block;
+    color: black;
+    text-decoration: none;
+    padding:10px 15px;
+}
+.dropcontent{
+    margin-top: 57px;
+    display:none;
+    position: absolute;
+    min-width: 100px;
+    background-color: rgb(127, 203, 216);
+    box-shadow:  2px 2px 5px hsla(0, 0%, 0%, 0.8);
+}
+.nav_left:hover .dropcontent{
+   display: block;
+}
+.dropcontent{
+    height:500px;
+    width:250px;
+}
+.nav_left .adrop:hover{
+    background-color: rgb(106, 24, 160);
+}
+
+.nav_left img{
+    height:9vh;
+}
+.mainnav{
+    display:flex;
+}
+.bottom{
+    background-color: black;
+    margin:auto;
+    padding:1rem;
+    width:95%;
+    color:white;
+    border-radius:30px;
+
+}
+.nav_mid{
+    align-items: center;
+    align-content: center;
+    text-align: center;
+    margin-left: 500px;
+}
+.nav_right{
+    display:inline-flex;
+    align-items: center;
+    align-content: center;
+    margin-left: 330px;
+}
+.nav_link{
+    color: black;
+}
+.nav_log{
+    color:black;
+    margin-left: 3px;
+    display: flex;
+    margin-right: 3px;
+}
+.nav_sign{
+    margin-right: 3px;
+    color:black;
+}
+#profile{
+    margin-left: 7px;
+    border-radius: 50px;
+    height:50px;
+    width: 50px;
+}
+.foot_mid_l_links{
+    margin-top:30px;
+    align-items: center;
+    margin-right: 30%;
+}
+.foot_mid_r_links{
+    margin-top:30px;
+    margin-right: 15%;
+}
+.foot_middle_right{
+    display:flex;
+}
+.search{
+    background:rgb(209, 128, 209);
+    border-style: solid;
+}
+.head{
+    text-align: center;
+}
+.genre{
+    margin-top: 30px;
+}
+.nav_games{
+    display: flex;
+    align-content: center;
+    text-align: center;
+}
+.fun{
+    margin-left: 10%;
+}
+.gk{
+    margin-left: 10%;
+}
+.entertainment{
+    margin-left: 10%;
+}
+.science{
+    margin-left: 10%;
+}
+.gens{
+    color:white;
+}
+.genm{
+    color:white;
+}
+.geng{
+    color:white;
+}
+.genmu{
+    color:white;
+}
+.gent{
+    color:white;
+}
+.gensci{
+    color:white;
+}
+.genh{
+    color:white;
+}
+.genc{
+    color:white;
+}
+.logmain{
+    display: flex;
+    margin-top:50px;
+    margin-left:150px;
+    width:800px;
+    height:500px;
+    margin-left:225px;
+}
+#log{
+    background-color: rgb(205, 239, 239);
+    width:400px;
+    height:500px;
+
+}
+.pic{
+    background-color: blueviolet;
+
+    width:400px;
+    height:500px;
+}
+.pic img{
+    width: 100%;
+    height: 100%;
+}
+.input{
+    border-radius: 10px;
+    width:300px;
+    height:25px;
+}
+.submit{
+    border-radius: 40px;
+    width:300px;
+    height:50px;
+    background: black;
+    color: white;
+    margin-top: 35px;
+    margin-left: 45px;
+}
+.submitsign{
+    border-radius: 40px;
+    width:300px;
+    height:50px;
+    background: black;
+    color: white;
+    margin-top: 20px;
+    margin-left: 45px;
+}
+.email{
+    margin-top: 20px;
+    margin-left: 40px;
+}
+.pass{
+    margin-top: 20px;
+    margin-left: 40px;
+}
+.loghead h1{
+    margin-left:150px;
+    margin-bottom: 50px;
+    margin-top:45px;
+}
+.signhead h1{
+    margin-left:150px;
+    margin-bottom: 0px;
+    margin-top:1px;
+}
+.signin{
+    margin-left:95px;
+}
+.back{
+    background-color: rgb(95, 224, 179);
+    width:100%;
+    height:100%;
+}
+.fname{
+    margin-top: 20px;
+    margin-left: 40px;
+}
+.lname{
+    margin-top: 20px;
+    margin-left: 40px;
+}
+.cname{
+    margin-top: 20px;
+    margin-left: 40px;
+}
+
+
+.nav_link_contact{
+    color: white;
+}
+.quizstart{
+    display:inline-block;
+    margin-top: 20px;
+}
+
+
+
+#instructions{
+    position:absolute;
+    background-color: white;
+    width: 800px;
+    height:522px;
+    top:50%;
+    left:50%;
+    transform: translate(-50%,-50%) scale(.9);
+    opacity: 0;
+    pointer-events: none;
+    transition: .3s ease;
+    background-color: rgb(225, 142, 244);
+    border-style: solid;
+    align-content: center;
+}
+#instructions.active{
+    opacity:1;
+    pointer-events: auto;
+    transform: translate(-50%,-50%) scale(1);
+}
+#main.active{
+    filter: blur(15px);
+}
+.inslevel1{
+    border-bottom: solid;
+    border-top: solid;
+    padding: 7px;
+    background-color: rgb(85, 217, 85);
+    height:150px;
+}
+.inslevel2{
+    border-bottom: solid;
+    padding: 7px;
+    background-color: rgb(228, 228, 51);
+    height:150px;
+}
+.inslevel3{
+    border-bottom: solid;
+    padding: 7px;
+    background-color: rgb(235, 35, 35);
+    height:153px;
+}
+.inslevel1 button{
+    height:30px;
+    width: 150px;
+    border-radius: 50px;
+    background-color: rgb(7, 238, 7);
+    position:absolute;
+    margin-left: 40%;
+}
+.inslevel2 button{
+    height:30px;
+    width: 150px;
+    border-radius: 50px;
+    background-color: yellow;
+    position: absolute;
+    margin-left: 40%;
+}
+.inslevel3 button{
+    height:30px;
+    width: 150px;
+    border-radius: 50px;
+    background-color: red;
+    position: absolute;
+    margin-left: 40%;
+}
+#instructions h2{
+    align-self: center;
+    margin-left:22%;
+}
+.insheading{
+    display:flex;
+}
+
+#insexit{
+    height:40px;
+    width:40px;
+    margin-left: 15px;
+    margin-bottom: 17px;
+    background-color: rgb(175, 54, 202);
+    margin-top: 10px;
+}
+.xyz{
+    margin-left: 389px;
+}
+.xyz button{
+    position: absolute;
+}
+
+.feedbackbackground{
+    height:100%;
+    width:100%;
+    background-image: url(https://img.freepik.com/premium-photo/abstract-background-images-wallpaper-ai-generated_643360-42730.jpg);
+    background-size: cover;
+}
+.feedbackbox{
+    display:flex;
+    top:50%;
+    margin-left: 130px;
+    margin-top: 50px;
+}
+.feedbackimage{
+    height:500px;
+    width:500px;
+    background-image: url(https://th.bing.com/th/id/OIP.Lkd9j6E-GJmFe71g4b-GQgHaHa?rs=1&pid=ImgDetMain);
+    background-size: cover;
+}
+.feedbackform{
+    height:500px;
+    width:500px;
+    background-color: bisque;
+}
+.input{
+    height: 50px;
+}
+#timer{
+    height:30px;
+    width:70px;
+    background-color: rgb(81, 102, 198);
+    margin-left: 1100px;
+}
+
+
+.disabled-link {
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+.welcome-text {
+    color: var(--primary-color);
+    font-weight: bold;
+    margin-right: 15px;
+}
