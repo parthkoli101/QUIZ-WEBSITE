@@ -1,5 +1,5 @@
 <?php
-session_start(); 
+session_start();
 
 if (!isset($_SESSION['username'])) {
     header("Location: login.php");
@@ -8,40 +8,93 @@ if (!isset($_SESSION['username'])) {
 
 $username = $_SESSION['username'];
 
-$conn = new mysqli('localhost', 'root', '', 'parth'); 
+$conn = new mysqli('localhost', 'root', 'Parth@23102025', 'crackquiz');
 
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $quizTopic = $_POST['quiz_topic'] ?? '';
+    $quizLevel = $_POST['quiz_level'] ?? '';
+    $score = (int)($_POST['score'] ?? 0);
+    $totalQuestions = (int)($_POST['total_questions'] ?? 0);
+    $attemptedQuestions = (int)($_POST['attempted_questions'] ?? 0);
+    $unattemptedQuestions = (int)($_POST['unattempted_questions'] ?? 0);
+    $wrongAnswers = (int)($_POST['wrong_answers'] ?? 0);
+
+    $quizLevelForDb = ($quizLevel === "NULL") ? NULL : (int)$quizLevel;
+
+    if ($quizLevelForDb === NULL) {
+        $checkStmt = $conn->prepare("SELECT * FROM quizresults WHERE username = ? AND quiz_topic = ? AND quiz_level IS NULL");
+        $checkStmt->bind_param("ss", $username, $quizTopic);
+    } else {
+        $checkStmt = $conn->prepare("SELECT * FROM quizresults WHERE username = ? AND quiz_topic = ? AND quiz_level = ?");
+        $checkStmt->bind_param("ssi", $username, $quizTopic, $quizLevelForDb);
+    }
+
+    $checkStmt->execute();
+    $checkResult = $checkStmt->get_result();
+
+    if ($checkResult->num_rows > 0) {
+        $existingRecord = $checkResult->fetch_assoc();
+        $newAttempts = $existingRecord['attempts'] + 1;
+        $newHighestScore = max($existingRecord['highest_score'], $score);
+        $newAverageScore = (($existingRecord['average_score'] * $existingRecord['attempts']) + $score) / $newAttempts;
+
+        if ($quizLevelForDb === NULL) {
+            $updateStmt = $conn->prepare("UPDATE quizresults SET attempts = ?, highest_score = ?, average_score = ? WHERE username = ? AND quiz_topic = ? AND quiz_level IS NULL");
+            $updateStmt->bind_param("iidss", $newAttempts, $newHighestScore, $newAverageScore, $username, $quizTopic);
+        } else {
+            $updateStmt = $conn->prepare("UPDATE quizresults SET attempts = ?, highest_score = ?, average_score = ? WHERE username = ? AND quiz_topic = ? AND quiz_level = ?");
+            $updateStmt->bind_param("iidssi", $newAttempts, $newHighestScore, $newAverageScore, $username, $quizTopic, $quizLevelForDb);
+        }
+
+        if ($updateStmt->execute()) {
+            echo json_encode(['status' => 'success', 'message' => 'Results updated successfully']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Failed to update results']);
+        }
+        $updateStmt->close();
+    } else {
+        $insertStmt = $conn->prepare("INSERT INTO quizresults (username, quiz_topic, quiz_level, attempts, highest_score, total_questions, attempted_questions, unattempted_questions, wrong_answers, average_score) VALUES (?, ?, ?, 1, ?, ?, ?, ?, ?, ?)");
+        $insertStmt->bind_param("ssiiiiiid", $username, $quizTopic, $quizLevelForDb, $score, $totalQuestions, $attemptedQuestions, $unattemptedQuestions, $wrongAnswers, $score);
+
+        if ($insertStmt->execute()) {
+            echo json_encode(['status' => 'success', 'message' => 'Results saved successfully']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Failed to save results']);
+        }
+        $insertStmt->close();
+    }
+
+    $checkStmt->close();
+    exit();
+}
+
 if ($_SERVER["REQUEST_METHOD"] == "GET") {
-    $quizType = $_GET['quiz_type'] ?? ''; 
-    $quizLevel = $_GET['quiz_level'] ?? 2; 
-    
+    $quizType = $_GET['quiz_type'] ?? '';
+    $quizLevel = $_GET['quiz_level'] ?? 1;
+
     if (empty($quizType)) {
         die("Quiz type not specified");
     }
-    
-    if ($quizLevel == 2 || $quizLevel == 3) {
-        
-        $checkPrevLevelStmt = null;
-        $requiredScore = 0;
-        $previousLevel = 0;
-        
-        if ($quizLevel == 2) {
-            $checkPrevLevelStmt = $conn->prepare("SELECT highest_score FROM quizresults WHERE username = ? AND quiz_topic = ? AND quiz_level = 1");
-            $previousLevel = 1;
-            $requiredScore = 4;
-        } else if ($quizLevel == 3) {
-            $checkPrevLevelStmt = $conn->prepare("SELECT highest_score FROM quizresults WHERE username = ? AND quiz_topic = ? AND quiz_level = 2");
-            $previousLevel = 2;
-            $requiredScore = 8;
-        }
-        
-        $checkPrevLevelStmt->bind_param("ss", $username, $quizType);
+
+    if ($quizLevel === "NULL" || $quizLevel === null) {
+        $quizLevel = NULL;
+    } else {
+        $quizLevel = (int)$quizLevel;
+    }
+
+    if ($quizLevel === 2 || $quizLevel === 3) {
+        $requiredScore = ($quizLevel === 2) ? 4 : 8;
+        $previousLevel = ($quizLevel === 2) ? 1 : 2;
+
+        $checkPrevLevelStmt = $conn->prepare("SELECT highest_score FROM quizresults WHERE username = ? AND quiz_topic = ? AND quiz_level = ?");
+        $checkPrevLevelStmt->bind_param("ssi", $username, $quizType, $previousLevel);
         $checkPrevLevelStmt->execute();
         $prevLevelResult = $checkPrevLevelStmt->get_result();
-        
+
         $canAttemptHigherLevel = false;
         if ($prevLevelResult->num_rows > 0) {
             $prevLevelRow = $prevLevelResult->fetch_assoc();
@@ -49,36 +102,38 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                 $canAttemptHigherLevel = true;
             }
         }
-        
+
+        $checkPrevLevelStmt->close();
+
         if (!$canAttemptHigherLevel) {
-            echo '<div class="quizstart">';
-            echo '<h1 id="heading">ACCESS DENIED</h1>';
-            echo '</div>';
-            echo '<div class="que">';
+            echo '<!DOCTYPE html>';
+            echo '<html><head><title>Access Denied</title>';
+            echo '<style>
+                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background-color: #f5f5f5; }
+                .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                h1 { color: #dc3545; margin-bottom: 20px; }
+                h2 { color: #333; margin-bottom: 30px; }
+                .btn { background-color: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; }
+                .btn:hover { background-color: #0056b3; }
+            </style></head><body>';
+            echo '<div class="container">';
+            echo '<h1>ACCESS DENIED</h1>';
             echo '<h2>You need to score ' . $requiredScore . ' or more in Level ' . $previousLevel . ' of ' . htmlspecialchars($quizType) . ' quiz to attempt this level.</h2>';
-            echo '</div>';
-            echo '<div class="qz1">';
-            echo '<div class="qbtn">';
-            echo '<a href="index.php"><button class="qbtnexit">BACK TO HOME</button></a>';
-            echo '</div>';
-            echo '</div>';
+            echo '<a href="index.php" class="btn">BACK TO HOME</a>';
+            echo '</div></body></html>';
             exit();
         }
     }
-    
-    $maxQuestions = 15; 
-    if ($quizLevel == 1) {
-        $maxQuestions = 10;
-    } elseif ($quizLevel == 2) {
+
+    $maxQuestions = 10;
+    if ($quizLevel === 2) {
         $maxQuestions = 15;
-    } elseif ($quizLevel == 3) {
+    } elseif ($quizLevel === 3) {
         $maxQuestions = 20;
-    } elseif ($quizLevel === NULL || $quizLevel === "NULL") {
-        $maxQuestions = 20; 
-        $quizLevel = NULL;
+    } elseif ($quizLevel === NULL) {
+        $maxQuestions = 20;
     }
-    
-    
+
     if ($quizLevel === NULL) {
         $stmt = $conn->prepare("SELECT * FROM quiz_questions WHERE quiz_type = ? AND quiz_level IS NULL ORDER BY RAND() LIMIT ?");
         $stmt->bind_param("si", $quizType, $maxQuestions);
@@ -88,17 +143,25 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
     }
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     if ($result->num_rows > 0) {
-        echo '<div class="quizstart">';
+        echo '<!DOCTYPE html>';
+        echo '<html lang="en">';
+        echo '<head>';
+        echo '<meta charset="UTF-8">';
+        echo '<meta name="viewport" content="width=device-width, initial-scale=1.0">';
         $levelDisplay = ($quizLevel === NULL) ? "PRACTICE" : "LEVEL $quizLevel";
+        echo '<title>'.strtoupper($quizType).' QUIZ - '.$levelDisplay.'</title>';
+        echo '</head>';
+        echo '<body>';
+
+        echo '<div class="quizstart">';
         echo '<h1 id="heading">'.strtoupper($quizType).' QUIZ - '.$levelDisplay.'</h1>';
         echo '</div>';
-        
+
         $totalQuestions = $result->num_rows;
-        
         $questions = [];
-        
+
         while ($row = $result->fetch_assoc()) {
             $options = [
                 'A' => $row['option_a'],
@@ -106,9 +169,9 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                 'C' => $row['option_c'],
                 'D' => $row['option_d']
             ];
-            
+
             $correctOption = strtoupper($row['correct_option']);
-            
+
             if (!isset($options[$correctOption])) {
                 $foundKey = null;
                 foreach ($options as $key => $value) {
@@ -117,65 +180,64 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                         break;
                     }
                 }
-                $correctOption = $foundKey ?? 'A'; 
+                $correctOption = $foundKey ?? 'A';
             }
-            
+
             $correctAnswer = $options[$correctOption];
-            
+
             $optionKeys = array_keys($options);
             shuffle($optionKeys);
-            
+
             $shuffledOptions = [];
-            $newCorrectOption = null; 
-            
+            $newCorrectOption = null;
+
             foreach ($optionKeys as $key) {
                 $shuffledOptions[$key] = $options[$key];
-                
+
                 if ($options[$key] === $correctAnswer) {
                     $newCorrectOption = $key;
                 }
             }
-            
+
             if ($newCorrectOption === null) {
-                $newCorrectOption = $optionKeys[0]; 
+                $newCorrectOption = $optionKeys[0];
             }
-            
+
             $questions[] = [
                 'id' => $row['id'],
                 'question' => $row['question'],
                 'options' => $shuffledOptions,
                 'correct_option' => $newCorrectOption,
-                'correct_answer' => $correctAnswer 
+                'correct_answer' => $correctAnswer
             ];
         }
-        
+
         $questionsJson = json_encode($questions);
-        
-        $timerDuration = 0; 
+
+        $timerDuration = 0;
         if ($quizLevel == 2) {
             $timerDuration = 15;
         } elseif ($quizLevel == 3) {
             $timerDuration = 10;
         }
-        
 
         echo '<div id="question-container">';
         echo '<div class="que">';
         echo '<h2 id="question-text"></h2>';
         echo '</div>';
         echo '<div class="qz1" id="qqz1">';
-        
+
         if ($timerDuration > 0) {
             echo '<div class="timer-container">';
             echo '<div id="timer-bar"></div>';
             echo '<div id="timer-text">' . $timerDuration . '</div>';
             echo '</div>';
         }
-        
+
         echo '<div class="abtn" id="abtn">';
         echo '</div>';
         echo '<div class="qbtn">';
-        
+
         if ($quizLevel == 1 || $quizLevel === NULL) {
             echo '<a href="index.php"><button class="qbtnexit">QUIT</button></a>';
             echo '<button id="prevbtn">PREVIOUS</button>';
@@ -184,14 +246,14 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
             echo '<a href="index.php"><button class="qbtnexit">QUIT</button></a>';
             echo '<button id="nextbtn">NEXT</button>';
         }
-        
+
         echo '</div>';
         echo '<div id="qno">';
         echo '<p><span id="current-question">1</span> of <span id="total-questions">' . $totalQuestions . '</span> questions</p>';
         echo '</div>';
         echo '</div>';
         echo '</div>';
-        
+
         echo '<div id="results-container" style="display:none;">';
         echo '<div class="quizstart">';
         echo '<h1 id="heading">QUIZ COMPLETE</h1>';
@@ -213,31 +275,21 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
         echo '</div>';
         echo '</div>';
         echo '</div>';
-        
-        echo '<form id="results-form" method="post" action="save_results.php" style="display:none;">';
-        echo '<input type="hidden" name="quiz_topic" value="' . htmlspecialchars($quizType) . '">';
-        echo '<input type="hidden" name="quiz_level" value="' . ($quizLevel === NULL ? "NULL" : $quizLevel) . '">';
-        echo '<input type="hidden" name="score" id="form-score" value="">';
-        echo '<input type="hidden" name="attempted_questions" id="form-attempted" value="">';
-        echo '<input type="hidden" name="unattempted_questions" id="form-unattempted" value="">';
-        echo '<input type="hidden" name="wrong_answers" id="form-wrong" value="">';
-        echo '<input type="hidden" name="total_questions" id="form-total" value="' . $totalQuestions . '">';
-        echo '</form>';
-        
+
         echo '<script>
-            // Quiz questions from PHP
             const questions = ' . $questionsJson . ';
             let currentQuestionIndex = 0;
             let score = 0;
             let selectedOption = null;
-            let userAnswers = new Array(questions.length).fill(null); // Track user answers
+            let userAnswers = new Array(questions.length).fill(null);
             let timer = null;
             let timeLeft = ' . $timerDuration . ';
             let timerEnabled = ' . ($timerDuration > 0 ? 'true' : 'false') . ';
             let username = "' . $username . '";
             let showPrevButton = ' . (($quizLevel == 1 || $quizLevel === NULL) ? 'true' : 'false') . ';
-            
-            // DOM elements
+            let quizType = "' . htmlspecialchars($quizType) . '";
+            let quizLevel = "' . ($quizLevel === NULL ? "NULL" : $quizLevel) . '";
+
             const questionContainer = document.getElementById("question-container");
             const resultsContainer = document.getElementById("results-container");
             const questionText = document.getElementById("question-text");
@@ -252,23 +304,13 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
             const attemptedCountElement = document.getElementById("attempted-count");
             const unattemptedCountElement = document.getElementById("unattempted-count");
             const questionsReviewElement = document.getElementById("questions-review");
-            const resultsForm = document.getElementById("results-form");
-            const formScore = document.getElementById("form-score");
-            const formAttempted = document.getElementById("form-attempted");
-            const formUnattempted = document.getElementById("form-unattempted");
-            const formWrong = document.getElementById("form-wrong");
-            const formTotal = document.getElementById("form-total");
-            
-            // Timer elements might not exist if timer is disabled
             const timerText = timerEnabled ? document.getElementById("timer-text") : null;
             const timerBar = timerEnabled ? document.getElementById("timer-bar") : null;
-            
-            // Initialize the quiz
+
             function initQuiz() {
                 if (questions.length > 0) {
                     showQuestion(currentQuestionIndex);
-                    
-                    // Disable previous button on first question
+
                     if (showPrevButton) {
                         prevButton.disabled = true;
                         prevButton.style.opacity = "0.5";
@@ -278,61 +320,48 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                     questionContainer.innerHTML = "<p>No questions available</p>";
                 }
             }
-            
-            // Start the timer for current question (if timer is enabled)
+
             function startTimer() {
-                // Skip if timer is not enabled for this level
                 if (!timerEnabled) return;
-                
-                // Clear any existing timer
+
                 if (timer) {
                     clearInterval(timer);
                 }
-                
-                // Reset timer display
+
                 timeLeft = ' . $timerDuration . ';
                 timerText.textContent = timeLeft;
                 timerBar.style.width = "100%";
-                timerBar.style.backgroundColor = "#4CAF50"; // Reset color
-                
-                // Start the countdown
+                timerBar.style.backgroundColor = "#4CAF50";
+
                 timer = setInterval(function() {
                     timeLeft--;
                     timerText.textContent = timeLeft;
-                    
-                    // Update timer bar width
+
                     const percentage = (timeLeft / ' . $timerDuration . ') * 100;
                     timerBar.style.width = percentage + "%";
-                    
-                    // Change color as time decreases
+
                     if (timeLeft <= Math.floor(' . $timerDuration . ' / 3)) {
                         timerBar.style.backgroundColor = "#FF5252";
                     } else if (timeLeft <= Math.floor(' . $timerDuration . ' * 2/3)) {
                         timerBar.style.backgroundColor = "#FFD740";
                     }
-                    
-                    // Auto-move to next question when time runs out
+
                     if (timeLeft <= 0) {
                         clearInterval(timer);
                         nextQuestion();
                     }
                 }, 1000);
             }
-            
-            // Display a question
+
             function showQuestion(index) {
-                // Reset selected option if no previous answer for this question
                 if (userAnswers[index] === null) {
                     selectedOption = null;
                 } else {
-                    // Restore previously selected answer
                     selectedOption = userAnswers[index];
                 }
-                
-                // Update question number
+
                 currentQuestionSpan.textContent = index + 1;
-                
-                // Update previous button state
+
                 if (showPrevButton) {
                     if (index === 0) {
                         prevButton.disabled = true;
@@ -344,80 +373,49 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                         prevButton.style.cursor = "pointer";
                     }
                 }
-                
-                // Get current question
+
                 const question = questions[index];
                 questionText.textContent = question.question;
-                
-                // Clear previous answers
+
                 answerContainer.innerHTML = "";
-                
-                // Add answer buttons
+
                 Object.entries(question.options).forEach(([key, text]) => {
                     const button = document.createElement("button");
                     button.className = "ansbtn";
                     button.textContent = text;
                     button.dataset.option = key;
                     button.onclick = function() { selectAnswer(this, question.correct_option); };
-                    
-                    // If this option was previously selected
+
                     if (selectedOption === key) {
                         button.classList.add("selected");
-                        
-                        // For level 1, only show blue selection without correct/incorrect indication
-                        if (!' . ($quizLevel == 1 ? 'true' : 'false') . ' && key === question.correct_option) {
-                            button.classList.add("correct");
-                        } else if (!' . ($quizLevel == 1 ? 'true' : 'false') . ' && key !== question.correct_option) {
-                            button.classList.add("incorrect");
-                        }
                     }
-                    
+
                     answerContainer.appendChild(button);
-                    
-                    // Add line break after each button
                     const br = document.createElement("br");
                     answerContainer.appendChild(br);
                 });
-                
-                // Start the timer for this question (if enabled)
+
                 if (timerEnabled) {
                     startTimer();
                 }
             }
-            
-            // Handle answer selection
+
             function selectAnswer(button, correctOption) {
-                // Remove selected class from all buttons
                 const buttons = document.querySelectorAll(".ansbtn");
                 buttons.forEach(btn => {
-                    btn.classList.remove("selected", "correct", "incorrect");
+                    btn.classList.remove("selected");
                 });
-                
-                // Add selected class to clicked button
+
                 button.classList.add("selected");
                 selectedOption = button.dataset.option;
-                
-                // Only show correct/incorrect colors for non-level 1 quizzes
-                if (!' . ($quizLevel == 1 ? 'true' : 'false') . ') {
-                    if (selectedOption === correctOption) {
-                        button.classList.add("correct");
-                    } else {
-                        button.classList.add("incorrect");
-                    }
-                }
-                
-                // Record the answer
                 userAnswers[currentQuestionIndex] = selectedOption;
             }
-            
-            // Handle next button click
+
             function nextQuestion() {
-                // Clear the timer if it exists
                 if (timer) {
                     clearInterval(timer);
                 }
-                
-                // Move to next question or show results
+
                 currentQuestionIndex++;
                 if (currentQuestionIndex < questions.length) {
                     showQuestion(currentQuestionIndex);
@@ -425,28 +423,24 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                     showResults();
                 }
             }
-            
-            // Handle previous button click
+
             function prevQuestion() {
-                // Clear the timer if it exists
                 if (timer) {
                     clearInterval(timer);
                 }
-                
-                // Move to previous question if not already at first question
+
                 if (currentQuestionIndex > 0) {
                     currentQuestionIndex--;
                     showQuestion(currentQuestionIndex);
                 }
             }
-            
-            // Calculate quiz statistics
+
             function calculateStats() {
                 let correctCount = 0;
                 let wrongCount = 0;
                 let attemptedCount = 0;
                 let unattemptedCount = 0;
-                
+
                 for (let i = 0; i < questions.length; i++) {
                     if (userAnswers[i] === null) {
                         unattemptedCount++;
@@ -459,7 +453,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                         }
                     }
                 }
-                
+
                 return {
                     correctCount,
                     wrongCount,
@@ -468,66 +462,62 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                     score: correctCount
                 };
             }
-            
-            // Submit results to server directly
+
             function submitResults(stats) {
-                // Fill in the form with quiz statistics
-                formScore.value = stats.score;
-                formAttempted.value = stats.attemptedCount;
-                formUnattempted.value = stats.unattemptedCount;
-                formWrong.value = stats.wrongCount;
-                
-                // Use AJAX to submit the form data without page reload
-                const formData = new FormData(resultsForm);
-                
-                fetch("quiz1.php", {  // Submit to this page
+                const formData = new FormData();
+                formData.append("quiz_topic", quizType);
+                formData.append("quiz_level", quizLevel);
+                formData.append("score", stats.score);
+                formData.append("total_questions", questions.length);
+                formData.append("attempted_questions", stats.attemptedCount);
+                formData.append("unattempted_questions", stats.unattemptedCount);
+                formData.append("wrong_answers", stats.wrongCount);
+
+                fetch("quiz.php", {
                     method: "POST",
                     body: formData
                 })
-                .then(response => {
-                    if (!response.ok) {
-                        console.error("Error saving quiz results");
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === "success") {
+                        console.log("Quiz results saved successfully");
+                    } else {
+                        console.error("Error saving quiz results:", data.message);
                     }
                 })
                 .catch(error => {
                     console.error("Error:", error);
                 });
             }
-            
-            // Show quiz results
+
             function showResults() {
-                // Stop the timer if it\'s still running
                 if (timer) {
                     clearInterval(timer);
                 }
-                
+
                 questionContainer.style.display = "none";
                 resultsContainer.style.display = "block";
-                
-                // Calculate stats
+
                 const stats = calculateStats();
-                
-                // Update results display
+
                 finalScoreElement.textContent = `Your Score: ${stats.score} out of ${questions.length}`;
                 correctCountElement.textContent = stats.correctCount;
                 wrongCountElement.textContent = stats.wrongCount;
                 attemptedCountElement.textContent = stats.attemptedCount;
                 unattemptedCountElement.textContent = stats.unattemptedCount;
-                
-                // Generate question review
+
                 questionsReviewElement.innerHTML = "<h3>Question Review</h3>";
-                
+
                 for (let i = 0; i < questions.length; i++) {
                     const question = questions[i];
                     const userAnswer = userAnswers[i];
-                    
+
                     const reviewItem = document.createElement("div");
                     reviewItem.className = "review-item";
-                    
-                    // Determine status class
+
                     let statusClass = "";
                     let statusText = "";
-                    
+
                     if (userAnswer === null) {
                         statusClass = "unattempted";
                         statusText = "Unattempted";
@@ -538,16 +528,14 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                         statusClass = "incorrect";
                         statusText = "Incorrect";
                     }
-                    
+
                     reviewItem.classList.add(statusClass);
-                    
-                    // Question text
+
                     reviewItem.innerHTML = `
                         <p><strong>Question ${i+1}:</strong> ${question.question}</p>
                         <p class="status ${statusClass}">${statusText}</p>
                     `;
-                    
-                    // Show the correct answer and user\'s answer if attempted
+
                     if (userAnswer !== null) {
                         const userSelectedText = question.options[userAnswer];
                         reviewItem.innerHTML += `
@@ -559,27 +547,22 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                             <p>Correct Answer: ${question.correct_answer}</p>
                         `;
                     }
-                    
+
                     questionsReviewElement.appendChild(reviewItem);
                 }
-                
-                // Submit results to server
+
                 submitResults(stats);
             }
-            
-            // Add event listeners
+
             nextButton.addEventListener("click", nextQuestion);
             if (showPrevButton) {
                 prevButton.addEventListener("click", prevQuestion);
             }
-            
-            // Start the quiz
+
             initQuiz();
         </script>';
-        
-        // CSS Styles
+
         echo '<style>
-            /* General Styles */
             body {
                 font-family: Arial, sans-serif;
                 line-height: 1.6;
@@ -589,8 +572,6 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                 padding: 20px;
                 background-color: #f5f5f5;
             }
-            
-            /* Quiz Header */
             .quizstart {
                 background-color: #4a4a4a;
                 color: white;
@@ -599,13 +580,10 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                 margin-bottom: 15px;
                 text-align: center;
             }
-            
             .quizstart h1 {
                 margin: 0;
                 font-size: 24px;
             }
-            
-            /* Question Styles */
             .que {
                 background-color: white;
                 padding: 20px;
@@ -613,13 +591,10 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                 margin-bottom: 15px;
                 box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             }
-            
             #question-text {
                 font-size: 18px;
                 margin: 0;
             }
-            
-            /* Quiz Container */
             .qz1 {
                 background-color: white;
                 padding: 20px;
@@ -627,8 +602,6 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                 margin-bottom: 15px;
                 box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             }
-            
-            /* Timer Styles */
             .timer-container {
                 margin-bottom: 15px;
                 text-align: center;
@@ -638,7 +611,6 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                 border-radius: 15px;
                 overflow: hidden;
             }
-            
             #timer-bar {
                 position: absolute;
                 top: 0;
@@ -649,7 +621,6 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                 transition: width 1s linear, background-color 0.5s;
                 z-index: 1;
             }
-            
             #timer-text {
                 position: relative;
                 z-index: 2;
@@ -658,12 +629,9 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                 line-height: 30px;
                 color: #000;
             }
-            
-            /* Answer Buttons */
             .abtn {
                 margin-bottom: 20px;
             }
-            
             .ansbtn {
                 display: inline-block;
                 width: 100%;
@@ -671,88 +639,67 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                 margin-bottom: 10px;
                 background-color: #f0f0f0;
                 border: 1px solid #ddd;
-                border-radius: 6px;
+                border-radius: 5px;
                 cursor: pointer;
                 font-size: 16px;
                 text-align: left;
-                transition: all 0.3s ease;
+                transition: all 0.3s;
             }
-            
             .ansbtn:hover {
                 background-color: #e0e0e0;
+                border-color: #ccc;
             }
-            
             .ansbtn.selected {
-                background-color: #4285f4;
+                background-color: #007bff;
                 color: white;
-                border-color: #2965c1;
+                border-color: #0056b3;
             }
-            
-            .ansbtn.correct {
-                background-color: #4285f4;
-                color: white;
-                border-color: #2965c1;
-            }
-            
-            .ansbtn.incorrect {
-                background-color: #4285f4;
-                color: white;
-                border-color: #2965c1;
-            }
-            
-            /* Navigation Buttons */
             .qbtn {
                 display: flex;
                 justify-content: space-between;
+                align-items: center;
                 margin-bottom: 15px;
             }
-            
-            .qbtn button {
+            .qbtnexit, #nextbtn, #prevbtn, .restart-btn {
                 padding: 10px 20px;
-                font-size: 16px;
-                border-radius: 6px;
+                border: none;
+                border-radius: 5px;
                 cursor: pointer;
+                font-size: 16px;
                 font-weight: bold;
-                transition: all 0.3s ease;
+                transition: all 0.3s;
             }
-            
-            #nextbtn, .restart-btn {
-                background-color: #4285f4;
-                color: white;
-                border: none;
-            }
-            
-            #nextbtn:hover, .restart-btn:hover {
-                background-color: #2965c1;
-            }
-            
-            #prevbtn {
-                background-color: #9e9e9e;
-                color: white;
-                border: none;
-            }
-            
-            #prevbtn:hover {
-                background-color: #757575;
-            }
-            
             .qbtnexit {
-                background-color: #f44336;
+                background-color: #dc3545;
                 color: white;
-                border: none;
             }
-            
             .qbtnexit:hover {
-                background-color: #d32f2f;
+                background-color: #c82333;
             }
-            
-            /* Question Counter */
+            #nextbtn, .restart-btn {
+                background-color: #28a745;
+                color: white;
+            }
+            #nextbtn:hover, .restart-btn:hover {
+                background-color: #218838;
+            }
+            #prevbtn {
+                background-color: #6c757d;
+                color: white;
+            }
+            #prevbtn:hover {
+                background-color: #5a6268;
+            }
+            #prevbtn:disabled {
+                background-color: #6c757d;
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
             #qno {
                 text-align: center;
-                font-weight: bold;
+                font-size: 14px;
+                color: #666;
             }
-            
-            /* Results Container */
             .quiz-results {
                 background-color: white;
                 padding: 20px;
@@ -760,107 +707,109 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                 margin-bottom: 15px;
                 box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             }
-            
+            #final-score {
+                text-align: center;
+                color: #28a745;
+                margin-bottom: 20px;
+                font-size: 24px;
+            }
             .result-details {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                gap: 15px;
-                margin: 20px 0;
+                gap: 10px;
+                margin-bottom: 20px;
                 padding: 15px;
-                background-color: #f9f9f9;
-                border-radius: 8px;
+                background-color: #f8f9fa;
+                border-radius: 5px;
             }
-            
             .result-details p {
                 margin: 5px 0;
-                font-size: 16px;
+                font-weight: bold;
             }
-            
-            #final-score {
-                font-size: 24px;
-                color: #4285f4;
-                text-align: center;
-            }
-            
-            /* Question Review */
-            #questions-review {
-                margin-top: 20px;
-            }
-            
             #questions-review h3 {
-                margin-bottom: 15px;
-                padding-bottom: 5px;
-                border-bottom: 2px solid #4285f4;
+                color: #333;
+                border-bottom: 2px solid #007bff;
+                padding-bottom: 10px;
+                margin-bottom: 20px;
             }
-            
             .review-item {
                 margin-bottom: 15px;
                 padding: 15px;
-                border-radius: 8px;
-                background-color: #f9f9f9;
-                border-left: 5px solid #ccc;
+                border-radius: 5px;
+                border-left: 4px solid #ddd;
             }
-            
-            .review-item p {
-                margin: 5px 0;
-            }
-            
             .review-item.correct {
-                border-left-color: #4caf50;
+                background-color: #d4edda;
+                border-left-color: #28a745;
             }
-            
             .review-item.incorrect {
-                border-left-color: #f44336;
+                background-color: #f8d7da;
+                border-left-color: #dc3545;
             }
-            
             .review-item.unattempted {
-                border-left-color: #ff9800;
+                background-color: #fff3cd;
+                border-left-color: #ffc107;
             }
-            
-            .status {
+            .review-item p {
+                margin: 8px 0;
+            }
+            .review-item .status {
                 font-weight: bold;
+                text-transform: uppercase;
+                font-size: 12px;
             }
-            
-            .status.correct {
-                color: #4caf50;
+            .review-item .status.correct {
+                color: #28a745;
             }
-            
-            .status.incorrect {
-                color: #f44336;
+            .review-item .status.incorrect {
+                color: #dc3545;
             }
-            
-            .status.unattempted {
-                color: #ff9800;
+            .review-item .status.unattempted {
+                color: #ffc107;
+            }
+            @media (max-width: 600px) {
+                body {
+                    padding: 10px;
+                }
+                .qbtn {
+                    flex-direction: column;
+                    gap: 10px;
+                }
+                .qbtnexit, #nextbtn, #prevbtn, .restart-btn {
+                    width: 100%;
+                }
+                .result-details {
+                    grid-template-columns: 1fr;
+                }
+                .quizstart h1 {
+                    font-size: 20px;
+                }
+                #question-text {
+                    font-size: 16px;
+                }
             }
         </style>';
-        
+
+        echo '</body>';
+        echo '</html>';
     } else {
-        echo '<div class="quizstart">';
-        echo '<h1 id="heading">NO QUESTIONS FOUND</h1>';
-        echo '</div>';
-        echo '<div class="que">';
-        $levelDisplay = ($quizLevel === NULL) ? "practice" : "level $quizLevel";
-        echo '<div class="que">';
-        echo '<h2>No questions available for ' . htmlspecialchars($quizType) . ' ' . $levelDisplay . ' quiz.</h2>';
-        echo '</div>';
-        echo '<div class="qz1">';
-        echo '<div class="qbtn">';
-        echo '<a href="index.php"><button class="qbtnexit">BACK TO HOME</button></a>';
-        echo '</div>';
-        echo '</div>';
+        echo '<!DOCTYPE html>';
+        echo '<html><head><title>No Questions</title>';
+        echo '<style>
+            body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background-color: #f5f5f5; }
+            .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+            h1 { color: #dc3545; margin-bottom: 20px; }
+            .btn { background-color: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; }
+            .btn:hover { background-color: #0056b3; }
+        </style></head><body>';
+        echo '<div class="container">';
+        echo '<h1>NO QUESTIONS AVAILABLE</h1>';
+        echo '<p>There are no questions available for this quiz type and level.</p>';
+        echo '<a href="index.php" class="btn">BACK TO HOME</a>';
+        echo '</div></body></html>';
     }
-} else {
-    echo '<div class="quizstart">';
-    echo '<h1 id="heading">INVALID REQUEST</h1>';
-    echo '</div>';
-    echo '<div class="que">';
-    echo '<h2>Please select a quiz from the main page.</h2>';
-    echo '</div>';
-    echo '<div class="qz1">';
-    echo '<div class="qbtn">';
-    echo '<a href="index.php"><button class="qbtnexit">BACK TO HOME</button></a>';
-    echo '</div>';
-    echo '</div>';
+
+    $stmt->close();
 }
 
 $conn->close();
